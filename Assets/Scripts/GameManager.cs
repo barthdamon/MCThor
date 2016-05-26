@@ -10,6 +10,11 @@ public class GameManager : MonoBehaviour {
 	public AimerCanvasRecharger aimer;
 	public Canvas mainCanvas;
 
+	public Text gameOverText;
+	public Text restartTimer;
+
+	private float restartTime = 10;
+
 	private float spawnDistance = 34.0f;
 	private float respawnTime = 5f;
 	private float playerHealth = 100;
@@ -22,6 +27,9 @@ public class GameManager : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
+		if (gameOver) {
+			UpdateRestartTime ();
+		}
 	}
 
 	IEnumerator BeginWaves () {
@@ -34,42 +42,44 @@ public class GameManager : MonoBehaviour {
 			GameObject newEnemy = Instantiate (enemy, spawnPoint, lookRotation) as GameObject;
 			newEnemy.GetComponent<EnemyController> ().gameManager = this;
 
-			if (respawnTime > 2) {
-				respawnTime -= 0.25f;
+			if (respawnTime > 1.25) {
+				respawnTime -= 0.5f;
 			}
 
 			yield return new WaitForSeconds(respawnTime);
 		}
 	}
 
-	public void SetGameOver() {
-		gameOver = true;
-	}
-
 	public void PlayerAttacked() {
 		Debug.Log ("Player Attacked");
 		// make the canvas flicker red
-		Color redFlash = new Color(1.0f, 0f, 0f, 0.5f);
+		playerHealth -= 10;
+		Color redFlash = new Color(1.0f, 0f, 0f, 0.8f);
 		Image canvasImage = mainCanvas.GetComponent<Image> ();
 		mainCanvas.GetComponent<Image> ().color = Color.Lerp (canvasImage.color, redFlash, 0.25f);
 		StartCoroutine (flashBack ());
+		if (playerHealth < 0) {
+			GameOver ();
+		}
 	}
 
 	IEnumerator flashBack () {
-		yield return new WaitForSeconds (0.25f);
+		yield return new WaitForSeconds (0.45f);
 		Color resetFlash = new Color(0f, 0f, 0f, 0.0f);
 		Image canvasImage = mainCanvas.GetComponent<Image> ();
 		mainCanvas.GetComponent<Image> ().color = Color.clear;
 	}
 
 	public void ShotsFired(Vector3 location) {
-		if (!aimer.isRecharging ()) {
-			Debug.Log ("SHOTS FIRED AT: " + location);
-			//fire away
-			GameObject shot = Instantiate(lightning, location, Quaternion.identity) as GameObject;
-			shot.GetComponent<ShellExplosion> ().FireLightning ();
-			aimer.LightningShot ();
-			//		shot.GetComponent<Rigidbody>().velocity = trajectory;
+		if (!gameOver) {
+			if (!aimer.isRecharging ()) {
+				Debug.Log ("SHOTS FIRED AT: " + location);
+				//fire away
+				GameObject shot = Instantiate(lightning, location, Quaternion.identity) as GameObject;
+				shot.GetComponent<ShellExplosion> ().FireLightning ();
+				aimer.LightningShot ();
+				//		shot.GetComponent<Rigidbody>().velocity = trajectory;
+			}
 		}
 	}
 
@@ -82,5 +92,34 @@ public class GameManager : MonoBehaviour {
 		pos.y = -1;
 		pos.z = 0 + spawnDistance * Mathf.Sin(ang * Mathf.Deg2Rad);
 		return pos;
+	}
+
+	private void UpdateRestartTime() {
+		restartTime -= Time.deltaTime;
+		if (restartTime < 0) {
+			playerHealth = 100;
+			gameOver = false;
+			gameOverText.enabled = false;
+			restartTimer.enabled = false;
+			respawnTime = 5;
+			StartCoroutine(BeginWaves ());
+			restartTime = 10;
+		} else {
+			restartTimer.text = "Restarting in: " + Mathf.RoundToInt(restartTime);
+		}
+	}
+
+	private void DestroyEnemies() {
+		GameObject[] enemies = GameObject.FindGameObjectsWithTag("Enemy");
+		foreach (GameObject enemy in enemies) {
+			Destroy (enemy);
+		}
+	}
+
+	private void GameOver() {
+		DestroyEnemies ();
+		gameOver = true;
+		gameOverText.enabled = true;
+		restartTimer.enabled = true;
 	}
 }
