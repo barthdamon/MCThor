@@ -10,9 +10,6 @@ public class GameManager : MonoBehaviour {
 	public AimerCanvasRecharger aimer;
 	public Canvas mainCanvas;
 
-	public Text gameOverText;
-	public Text restartTimer;
-
 	private float restartTime = 10;
 
 	private float spawnDistance = 34.0f;
@@ -99,13 +96,14 @@ public class GameManager : MonoBehaviour {
 		if (restartTime < 0) {
 			playerHealth = 100;
 			gameOver = false;
-			gameOverText.enabled = false;
-			restartTimer.enabled = false;
+			Color standardColor = new Color(1.0f, 0f, 0f, 0f);
+			Image canvasImage = mainCanvas.GetComponent<Image> ();
+			mainCanvas.GetComponent<Image> ().color = standardColor;
 			respawnTime = 5;
 			StartCoroutine(BeginWaves ());
 			restartTime = 10;
 		} else {
-			restartTimer.text = "Restarting in: " + Mathf.RoundToInt(restartTime);
+//			restartTimer.text = "Restarting in: " + Mathf.RoundToInt(restartTime);
 		}
 	}
 
@@ -119,7 +117,8 @@ public class GameManager : MonoBehaviour {
 	private void GameOver() {
 		DestroyEnemies ();
 		gameOver = true;
-		gameOverText.enabled = true;
-		restartTimer.enabled = true;
+		Color redFlash = new Color(1.0f, 0f, 0f, 1f);
+		Image canvasImage = mainCanvas.GetComponent<Image> ();
+		mainCanvas.GetComponent<Image> ().color = redFlash;
 	}
 }
