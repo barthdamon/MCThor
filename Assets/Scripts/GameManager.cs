@@ -50,21 +50,27 @@ public class GameManager : MonoBehaviour {
 	public void PlayerAttacked() {
 		Debug.Log ("Player Attacked");
 		// make the canvas flicker red
-		playerHealth -= 10;
-		Color redFlash = new Color(1.0f, 0f, 0f, 0.8f);
-		Image canvasImage = mainCanvas.GetComponent<Image> ();
-		mainCanvas.GetComponent<Image> ().color = Color.Lerp (canvasImage.color, redFlash, 0.25f);
-		StartCoroutine (flashBack ());
-		if (playerHealth < 0) {
-			GameOver ();
+		if (!gameOver) {
+			playerHealth -= 10;
+			if (playerHealth < 0) {
+				GameOver ();
+			} else {
+				Color redFlash = new Color(1.0f, 0f, 0f, 0.8f);
+				Image canvasImage = mainCanvas.GetComponent<Image> ();
+				mainCanvas.GetComponent<Image> ().color = Color.Lerp (canvasImage.color, redFlash, 0.25f);
+				StartCoroutine (flashBack ());
+			}
 		}
 	}
 
 	IEnumerator flashBack () {
 		yield return new WaitForSeconds (0.45f);
-		Color resetFlash = new Color(0f, 0f, 0f, 0.0f);
-		Image canvasImage = mainCanvas.GetComponent<Image> ();
-		mainCanvas.GetComponent<Image> ().color = Color.clear;
+		if (!gameOver) {
+			Color resetFlash = new Color(0f, 0f, 0f, 0.0f);
+			Image canvasImage = mainCanvas.GetComponent<Image> ();
+			mainCanvas.GetComponent<Image> ().color = Color.clear;
+			Debug.Log ("flashing back");
+		}
 	}
 
 	public void ShotsFired(Vector3 location) {
@@ -94,6 +100,7 @@ public class GameManager : MonoBehaviour {
 	private void UpdateRestartTime() {
 		restartTime -= Time.deltaTime;
 		if (restartTime < 0) {
+			Debug.Log ("Restarting Game");
 			playerHealth = 100;
 			gameOver = false;
 			Color standardColor = new Color(1.0f, 0f, 0f, 0f);
@@ -117,7 +124,7 @@ public class GameManager : MonoBehaviour {
 	private void GameOver() {
 		DestroyEnemies ();
 		gameOver = true;
-		Color redFlash = new Color(1.0f, 0f, 0f, 1f);
+		Color redFlash = new Color(0.8f, 0f, 0f, 0.8f);
 		Image canvasImage = mainCanvas.GetComponent<Image> ();
 		mainCanvas.GetComponent<Image> ().color = redFlash;
 	}
